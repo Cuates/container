@@ -1,0 +1,62 @@
+version: "3"
+# docker compose -f docker-compose-cuatesnpm.yml --env-file cuatesnpm-variables.env up -d
+# docker compose -f docker-compose-cuatesnpm.yml --env-file cuatesnpm-variables.env down
+## -f specify docker-compose file
+## --env-file specify environment file
+## -d detached mode; execution do not show in the terminal window
+## -p project name
+## Below are examples of using the -p flag to give it a project name if not given in the environment file
+## i.e. docker compose -f docker-compose-cuatesnpm.yml --env-file cuatesnpm-variables.env -p cuates-webserver up -d
+## i.e. docker compose -f docker-compose-cuatesnpm.yml --env-file cuatesnpm-variables.env -p cuates-webserver down
+# docker stop nginxproxymanager
+# docker rm nginxproxymanager
+# docker stop mariadbnpm
+# docker rm mariadbnpm
+services:
+  nginxproxymanager:
+    image: ${NPMS_JC_CONTAINER_IMAGE}
+    container_name: nginxproxymanager
+    environment:
+      - DB_MYSQL_HOST=mariadbnpm
+      - DB_MYSQL_PORT=${DNPM_EXTERNAL_PORT}
+      - DB_MYSQL_USER=${DNPM_USER}
+      - DB_MYSQL_PASSWORD=${DNPM_PASSWORD}
+      - DB_MYSQL_NAME=${DNPM_DATABASE}
+      - TTZ=${TIMEZONE_LOCATION}
+    volumes:
+      - ${NPMS_DATA_PATH}:/data
+      - ${NPMS_LOG_PATH}:/app/logs
+      - ${NPMS_LETSENCRYPT_PATH}:/etc/letsencrypt
+    ports:
+      # These ports are in format <host-port>:<container-port>
+      - ${NPMS_HTTP_EXTERNAL_PORT}:${NPMS_HTTP_INTERNAL_PORT} # Public HTTP Port
+      - ${NPMS_HTTPS_EXTERNAL_PORT}:${NPMS_HTTPS_INTERNAL_PORT} # Public HTTPS Port
+      - ${NPMS_ADMIN_EXTERNAL_PORT}:${NPMS_ADMIN_INTERNAL_PORT} # Admin Web Port
+    depends_on:
+      - mariadbnpm
+    networks:
+      - docker-npm-network
+      - npm-network-internal
+    restart: unless-stopped
+
+  mariadbnpm:
+    image: ${DNPM_OF_CONTAINER_IMAGE}
+    container_name: mariadbnpm
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DNPM_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${DNPM_DATABASE}
+      - MYSQL_USER=${DNPM_USER}
+      - MYSQL_PASSWORD=${DNPM_PASSWORD}
+      - MYSQL_TCP_PORT=${DNPM_EXTERNAL_PORT}
+    ports:
+      - ${DNPM_EXTERNAL_PORT}:${DNPM_INTERNAL_PORT}
+    volumes:
+      - ${DNPM_DATA_PATH}:/var/lib/mysql
+    networks:
+      - npm-network-internal
+    restart: unless-stopped
+
+networks:
+  npm-network-internal:
+  docker-npm-network:
+    external: true
