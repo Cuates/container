@@ -45,4 +45,4 @@ NginxProxyManager
     * Leave everything as default
   * Click button Save
 * NOTE: [Arrs applications](https://github.com/Cuates/container/tree/main/docker/media)
-  * Make sure to setup and include the base urls before you can access through Nginx Proxy Manager
+  * Make sure to setup and include the base urls before you can access through the Nginx Proxy Manager container
