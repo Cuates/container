@@ -2,13 +2,17 @@
 > Docker compose yml and env files to build containers
 
 ## Table of Contents
+* [Command](#command)
 * [Portainer](#portainer)
 * [NginxProxyManager](#nginxproxymanager)
 * [TorrentVPN](#torrentvpn)
 * [Media](#media)
 * [LWS](#lws)
 
-### Poertainer
+### Command
+* [0.1]()
+
+### Portainer
 * [0.1](https://github.com/Cuates/container/tree/main/docker/portainer)
 
 ### NginxProxyManager
