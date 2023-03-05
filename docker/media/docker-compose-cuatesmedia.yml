@@ -1,0 +1,195 @@
+version: "1.0"
+# docker compose -f docker-compose-cuatesmedia.yml --env-file cuatesmedia-variables.env up -d
+# docker compose -f docker-compose-cuatesmedia.yml --env-file cuatesmedia-variables.env down
+## -f specify docker-compose file
+## --env-file specify environment file
+## -d detached mode; execution do not show in the terminal window
+## -p project name
+## Below are examples of using the -p flag to give it a project name if not given in the environment file
+## i.e. docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env -p cuates-media up -d
+## i.e. docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env -p cuates-media down
+# docker stop jellyfin
+# docker rm jellyfin
+# docker stop prowlarr
+# docker rm prowlarr
+# docker stop sonarr
+# docker rm sonarr
+# docker stop radarr
+# docker rm radarr
+# docker stop readarr
+# docker rm readarr
+# docker stop lidarr
+# docker rm lidarr
+# docker stop whisparr
+# docker rm whisparr
+# docker stop jellyseerr
+# docker rm jellyseerr
+# docker stop komga
+# docker rm komga
+# docker stop kavita
+# docker rm kavita
+services:
+  jellyfin:
+    image: ${JLYF_OF_CONTAINER_IMAGE}
+    container_name: jellyfin
+    environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - TTZ=${TIMEZONE_LOCATION}
+    volumes:
+      - ${JLYF_CONFIG_PATH}:/config
+      - ${JLYF_CACHE_PATH}:/cache
+      - ${JLYF_DRIVE_E_PATH}movie:/movie
+      - ${JLYF_DRIVE_E_PATH}tv:/tv
+    ports:
+      - ${JLYF_EXTERNAL_PORT}:${JLYF_INTERNAL_PORT}
+    restart: unless-stopped
+
+  prowlarr:
+    image: ${PRLR_LS_CONTAINER_IMAGE}
+    container_name: prowlarr
+    environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - TTZ=${TIMEZONE_LOCATION}
+      #- UMASK=002
+    volumes:
+      - ${PRLR_CONFIG_PATH}:/config
+      - ${QBT_DOWNLOADS_PATH}:/downloads
+    ports:
+      - ${PRLR_EXTERNAL_PORT}:${PRLR_INTERNAL_PORT}
+    restart: unless-stopped
+
+  sonarr:
+    image: ${SONR_LS_CONTAINER_IMAGE}
+    container_name: sonarr
+    environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - TTZ=${TIMEZONE_LOCATION}
+      #- UMASK=002
+    volumes:
+      - ${SONR_CONFIG_PATH}:/config
+      - ${QBT_DOWNLOADS_PATH}:/downloads
+      - ${QBT_DOWNLOADS_PATH}\\tv_download:/tv_download
+      - ${QBT_DOWNLOADS_PATH}\\tv_anime_download:/tv_anime_download
+    ports:
+      - ${SONR_EXTERNAL_PORT}:${SONR_INTERNAL_PORT}
+    restart:  unless-stopped
+
+  radarr:
+    image: ${RADR_LS_CONTAINER_IMAGE}
+    container_name: radarr
+    environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - TTZ=${TIMEZONE_LOCATION}
+      #- UMASK=002
+    volumes:
+      - ${RADR_CONFIG_PATH}:/config
+      - ${QBT_DOWNLOADS_PATH}:/downloads
+      - ${QBT_DOWNLOADS_PATH}\\movie_download:/movie_download
+      - ${QBT_DOWNLOADS_PATH}\\movie_anime_download:/movie_anime_download
+    ports:
+      - ${RADR_EXTERNAL_PORT}:${RADR_INTERNAL_PORT}
+    restart: unless-stopped
+
+  readarr:
+    image: ${REDR_LS_CONTAINER_IMAGE}
+    container_name: readarr
+    environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - TTZ=${TIMEZONE_LOCATION}
+      #- UMASK=002
+    volumes:
+      - ${REDR_CONFIG_PATH}:/config
+      - ${QBT_DOWNLOADS_PATH}:/downloads
+      - ${QBT_DOWNLOADS_PATH}\\ebook_download:/ebook_download
+      - ${QBT_DOWNLOADS_PATH}\\ebook_anime_download:/ebook_anime_download
+    ports:
+      - ${REDR_EXTERNAL_PORT}:${REDR_INTERNAL_PORT}
+    restart: unless-stopped
+
+  lidarr:
+    image: ${LIDR_LS_CONTAINER_IMAGE}
+    container_name: lidarr
+    environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - TTZ=${TIMEZONE_LOCATION}
+      #- UMASK=002
+    volumes:
+      - ${LIDR_CONFIG_PATH}:/config
+      - ${QBT_DOWNLOADS_PATH}:/downloads
+      - ${QBT_DOWNLOADS_PATH}\\music_download:/music_download
+    ports:
+      - ${LIDR_EXTERNAL_PORT}:${LIDR_INTERNAL_PORT}
+    restart: unless-stopped
+
+  whisparr:
+    image: ${WHSR_HT_CONTAINER_IMAGE}
+    container_name: whisparr
+    environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - TTZ=${TIMEZONE_LOCATION}
+      #- UMASK=002
+    volumes:
+      - ${WHSR_CONFIG_PATH}:/config
+      - ${QBT_DOWNLOADS_PATH}:/downloads
+      - ${QBT_DOWNLOADS_PATH}\\movie_x_download:/movie_x_download
+    ports:
+      - ${WHSR_EXTERNAL_PORT}:${WHSR_INTERNAL_PORT}
+    restart: unless-stopped
+
+  jellyseerr:
+    image: ${JLYS_FB_CONTAINER_IMAGE}
+    container_name: jellyseerr
+    environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - TTZ=${TIMEZONE_LOCATION}
+      #- UMASK=002
+    volumes:
+      - ${JLYS_CONFIG_PATH}:/app/config
+    ports:
+      - ${JLYS_EXTERNAL_PORT}:${JLYS_INTERNAL_PORT}
+    restart: unless-stopped
+
+  komga:
+    image: ${KMGA_OF_CONTAINER_IMAGE}
+    container_name: komga
+    volumes:
+      - ${KMGA_CONFIG_PATH}:/config
+      - ${QBT_DOWNLOADS_PATH}\\ebook_download:/ebook_download
+      - ${QBT_DOWNLOADS_PATH}\\ebook_anime_download:/ebook_anime_download
+    environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - JAVA_TOOL_OPTIONS=${KMGA_MEMORY_LIMIT}
+      - SERVER_SERVLET_CONTEXT_PATH=${KMGA_BASE_URL}
+      - TZ=${TIMEZONE_LOCATION}
+    ports:
+      - ${KMGA_EXTERNAL_PORT}:${KMGA_INTERNAL_PORT}
+    restart: unless-stopped
+
+  kavita:
+    image: ${KVTA_OF_CONTAINER_IMAGE}
+    container_name: kavita
+    volumes:
+      - ${KVTA_CONFIG_PATH}:/kavita/config
+      - ${QBT_DOWNLOADS_PATH}\\ebook_download:/ebook_download
+      - ${QBT_DOWNLOADS_PATH}\\ebook_anime_download:/ebook_anime_download
+    environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - TZ=${TIMEZONE_LOCATION}
+    ports:
+      - ${KVTA_EXTERNAL_PORT}:${KVTA_INTERNAL_PORT}
+    restart: unless-stopped
+
+networks:
+  default:
+    name: docker-npm-network
+    external: true
