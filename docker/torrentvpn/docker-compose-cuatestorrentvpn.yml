@@ -1,0 +1,61 @@
+version: "1.0"
+# docker compose -f docker-compose-cuatestorrentvpn.yml --env-file cuatestorrentvpn-variables.env up -d
+# docker compose -f docker-compose-cuatestorrentvpn.yml --env-file cuatestorrentvpn-variables.env down
+## -f specify docker-compose file
+## --env-file specify environment file
+## -d detached mode
+## -p project name
+## Below are examples of using the -p flag to give it a project name if not given in the environment file
+## i.e. docker compose -f docker-compose-cuatestorrentvpn.yml --env-file cuatestorrentvpn-variables.env -p cuates-torrentvpn up -d
+## i.e. docker compose -f docker-compose-cuatestorrentvpn.yml --env-file cuatestorrentvpn-variables.env -p cuates-torrentvpn down
+# docker stop gluetun
+# docker rm gluetun
+# docker stop qbittorent
+# docker rm qbittorent
+services:
+  gluetun:
+    image: ${GLTN_OF_CONTAINER_IMAGE}
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    environment:
+      # See https://github.com/qdm12/gluetun/wiki
+      - VPN_SERVICE_PROVIDER=${GLTN_VPN_SERVICE_PROVIDER}
+      - OPENVPN_USER=${GLTN_OPENVPN_USERNAME}
+      - OPENVPN_PASSWORD=${GLTN_OPENVPN_PASSWORD}
+      - SERVER_COUNTRIES=${GLTN_SERVER_COUNTRIES}
+      - SERVER_CITIES=${GLTN_SERVER_CITIES}
+      - SERVER_HOSTNAMES=${GLTN_SERVER_HOSTNAMES}
+      - SERVER_REGIONS=${GLTN_SERVER_REGIONS}
+      - TTZ=${TIMEZONE_LOCATION}
+    volumes:
+      - ${GLTN_PATH}:/gluetun
+    ports:
+      - ${QBT_EXTERNAL_PORT}:${QBT_INTERNAL_PORT}
+      - ${QBT_EXTERNAL_TRAFFIC_PORT}:${QBT_INTERNAL_TRAFFIC_PORT}/tcp
+      - ${QBT_EXTERNAL_TRAFFIC_PORT}:${QBT_INTERNAL_TRAFFIC_PORT}/udp
+    restart: unless-stopped
+
+  qbittorrent:
+    image: ${QBT_OF_CONTAINER_IMAGE}
+    container_name: qbittorrent
+    environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - QBT_EULA=${QBT_EULA}
+      - QBT_WEBUI_PORT=${QBT_EXTERNAL_PORT}
+      - TZ=${TIMEZONE_LOCATION}
+    volumes:
+      - ${QBT_CONFIG_PATH}config:/config
+      - ${QBT_DOWNLOADS_PATH}:/downloads
+    # ports:
+      # - ports are going through gluetun instead of qbittorrent
+    depends_on:
+      - gluetun
+    network_mode: service:gluetun
+    restart: unless-stopped
+
+networks:
+  default:
+    name: docker-npm-network
+    external: true
