@@ -1,7 +1,7 @@
 NginxProxyManager
 
 * Dependency
-  * Create [docker network](https://github.com/Cuates/container/tree/main/docker/command) to associate against
+  * Create [docker network](https://github.com/Cuates/container/tree/main/docker/command) to associate against if not already done so
     * If using Nginx Proxy Manager, then all docker containers will need to be on the same docker network to be able to see each other
   * Open port (80 and 443) through modem
   * Open port (80 and 443) through router
