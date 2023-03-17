@@ -8,6 +8,10 @@ version: "1.0"
 ## Below are examples of using the -p flag to give it a project name if not given in the environment file
 ## i.e. docker compose -f docker-compose-cuatestorrentvpn.yml --env-file cuatestorrentvpn-variables.env -p cuates-torrentvpn up -d
 ## i.e. docker compose -f docker-compose-cuatestorrentvpn.yml --env-file cuatestorrentvpn-variables.env -p cuates-torrentvpn down
+## Update one container without downing all containers and prune unused images
+# docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env pull gluetun
+# docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env up -d gluetun
+# docker image prune
 # docker stop gluetun
 # docker rm gluetun
 # docker stop qbittorent
@@ -25,15 +29,15 @@ services:
       - OPENVPN_PASSWORD=${GLTN_OPENVPN_PASSWORD}
       - SERVER_COUNTRIES=${GLTN_SERVER_COUNTRIES}
       - SERVER_CITIES=${GLTN_SERVER_CITIES}
-      - SERVER_HOSTNAMES=${GLTN_SERVER_HOSTNAMES}
-      - SERVER_REGIONS=${GLTN_SERVER_REGIONS}
+      #- SERVER_HOSTNAMES=${GLTN_SERVER_HOSTNAMES}
+      #- SERVER_REGIONS=${GLTN_SERVER_REGIONS}
       - TTZ=${TIMEZONE_LOCATION}
     volumes:
       - ${GLTN_PATH}:/gluetun
     ports:
       - ${QBT_EXTERNAL_PORT}:${QBT_INTERNAL_PORT}
-      - ${QBT_EXTERNAL_TRAFFIC_PORT}:${QBT_INTERNAL_TRAFFIC_PORT}/tcp
-      - ${QBT_EXTERNAL_TRAFFIC_PORT}:${QBT_INTERNAL_TRAFFIC_PORT}/udp
+      #- ${QBT_EXTERNAL_TRAFFIC_PORT}:${QBT_INTERNAL_TRAFFIC_PORT}/tcp
+      #- ${QBT_EXTERNAL_TRAFFIC_PORT}:${QBT_INTERNAL_TRAFFIC_PORT}/udp
     restart: unless-stopped
 
   qbittorrent:
