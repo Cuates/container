@@ -8,6 +8,10 @@ version: "3"
 ## Below are examples of using the -p flag to give it a project name if not given in the environment file
 ## i.e. docker compose -f docker-compose-cuatesnpm.yml --env-file cuatesnpm-variables.env -p cuates-webserver up -d
 ## i.e. docker compose -f docker-compose-cuatesnpm.yml --env-file cuatesnpm-variables.env -p cuates-webserver down
+## Update one container without downing all containers and prune unused images
+# docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env pull nginxproxymanager
+# docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env up -d nginxproxymanager
+# docker image prune
 # docker stop nginxproxymanager
 # docker rm nginxproxymanager
 # docker stop mariadbnpm
