@@ -20,7 +20,7 @@ services:
     container_name: portainer
     command: ${PRTR_SOCK_COMMAND}
     environment:
-      - TTZ=${TIMEZONE_LOCATION}
+      - TZ=${TIMEZONE_LOCATION}
     volumes:
       - ${PRTR_SOCK_PATH}:/var/run/docker.sock
       - ${PRTR_DATA_PATH}:/data
