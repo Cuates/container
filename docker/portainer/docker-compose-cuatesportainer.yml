@@ -20,6 +20,8 @@ services:
     container_name: portainer
     command: ${PRTR_SOCK_COMMAND}
     environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
       - TZ=${TIMEZONE_LOCATION}
     volumes:
       - ${PRTR_SOCK_PATH}:/var/run/docker.sock
