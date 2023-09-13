@@ -52,6 +52,9 @@ services:
       - MYSQL_USER=${DNPM_USER}
       - MYSQL_PASSWORD=${DNPM_PASSWORD}
       - MYSQL_TCP_PORT=${DNPM_EXTERNAL_PORT}
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - TZ=${TIMEZONE_LOCATION}
     ports:
       - ${DNPM_EXTERNAL_PORT}:${DNPM_INTERNAL_PORT}
     volumes:
