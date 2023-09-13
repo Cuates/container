@@ -39,7 +39,7 @@ services:
     environment:
       # - PUID=${PUID_VALUE}
       # - PGID=${PGID_VALUE}
-      - TTZ=${TIMEZONE_LOCATION}
+      - TZ=${TIMEZONE_LOCATION}
     volumes:
       - ${JLYF_CONFIG_PATH}:/config
       - ${JLYF_CACHE_PATH}:/cache
@@ -55,7 +55,7 @@ services:
     environment:
       # - PUID=${PUID_VALUE}
       # - PGID=${PGID_VALUE}
-      - TTZ=${TIMEZONE_LOCATION}
+      - TZ=${TIMEZONE_LOCATION}
       #- UMASK=002
     volumes:
       - ${PRLR_CONFIG_PATH}:/config
@@ -70,7 +70,7 @@ services:
     environment:
       # - PUID=${PUID_VALUE}
       # - PGID=${PGID_VALUE}
-      - TTZ=${TIMEZONE_LOCATION}
+      - TZ=${TIMEZONE_LOCATION}
       #- UMASK=002
     volumes:
       - ${SONR_CONFIG_PATH}:/config
@@ -87,7 +87,7 @@ services:
     environment:
       # - PUID=${PUID_VALUE}
       # - PGID=${PGID_VALUE}
-      - TTZ=${TIMEZONE_LOCATION}
+      - TZ=${TIMEZONE_LOCATION}
       #- UMASK=002
     volumes:
       - ${RADR_CONFIG_PATH}:/config
@@ -104,7 +104,7 @@ services:
     environment:
       # - PUID=${PUID_VALUE}
       # - PGID=${PGID_VALUE}
-      - TTZ=${TIMEZONE_LOCATION}
+      - TZ=${TIMEZONE_LOCATION}
       #- UMASK=002
     volumes:
       - ${REDR_CONFIG_PATH}:/config
@@ -121,7 +121,7 @@ services:
     environment:
       # - PUID=${PUID_VALUE}
       # - PGID=${PGID_VALUE}
-      - TTZ=${TIMEZONE_LOCATION}
+      - TZ=${TIMEZONE_LOCATION}
       #- UMASK=002
     volumes:
       - ${LIDR_CONFIG_PATH}:/config
@@ -137,7 +137,7 @@ services:
     environment:
       # - PUID=${PUID_VALUE}
       # - PGID=${PGID_VALUE}
-      - TTZ=${TIMEZONE_LOCATION}
+      - TZ=${TIMEZONE_LOCATION}
       #- UMASK=002
     volumes:
       - ${WHSR_CONFIG_PATH}:/config
@@ -153,7 +153,7 @@ services:
     environment:
       # - PUID=${PUID_VALUE}
       # - PGID=${PGID_VALUE}
-      - TTZ=${TIMEZONE_LOCATION}
+      - TZ=${TIMEZONE_LOCATION}
       #- UMASK=002
     volumes:
       - ${JLYS_CONFIG_PATH}:/app/config
