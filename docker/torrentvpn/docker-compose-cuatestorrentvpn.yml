@@ -31,7 +31,7 @@ services:
       - SERVER_CITIES=${GLTN_SERVER_CITIES}
       #- SERVER_HOSTNAMES=${GLTN_SERVER_HOSTNAMES}
       #- SERVER_REGIONS=${GLTN_SERVER_REGIONS}
-      - TTZ=${TIMEZONE_LOCATION}
+      - TZ=${TIMEZONE_LOCATION}
     volumes:
       - ${GLTN_PATH}:/gluetun
     ports:
