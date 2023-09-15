@@ -1,0 +1,16 @@
+version: "1.0"
+# docker compose -f docker-compose-rssfeed.yml --env-file rssfeed-variables.env up -d
+# docker compose -f docker-compose-rssfeed.yml --env-file rssfeed-variables.env down
+## -f specify docker-compose file
+## --env-file specify environment file
+## -d detached mode; execution do not show in the terminal window
+## -p project name
+## Below are examples of using the -p flag to give it a project name if not given in the environment file
+## i.e. docker compose -f docker-compose-rssfeed.yml --env-file rssfeed-variables.env -p rssfeed up -d
+## i.e. docker compose -f docker-compose-rssfeed.yml --env-file rssfeed-variables.env -p rssfeed down
+## Update one container without downing all containers and prune unused images
+# docker compose -f docker-compose-rssfeed.yml --env-file rssfeed-variables.env pull <container_name>
+# docker compose -f docker-compose-rssfeed.yml --env-file rssfeed-variables.env up -d <container_name>
+# docker image prune
+# docker stop <container_name>
+# docker rm <container_name>
