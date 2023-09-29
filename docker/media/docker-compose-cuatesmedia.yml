@@ -8,10 +8,11 @@ version: "1.0"
 ## Below are examples of using the -p flag to give it a project name if not given in the environment file
 ## i.e. docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env -p cuates-media up -d
 ## i.e. docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env -p cuates-media down
-## Update one container without downing all containers and prune unused images
-# docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env pull prowlarr
-# docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env up -d prowlarr
-# docker image prune
+## Update all or one container(s) without downing all container(s)
+# docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env pull [container_name]
+# docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env up -d [container_name]
+## Remove dangling and or unused images
+## i.e. docker image prune
 # docker stop jellyfin
 # docker rm jellyfin
 # docker stop prowlarr
