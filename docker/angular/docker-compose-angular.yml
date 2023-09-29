@@ -1,0 +1,67 @@
+version: '2'
+# docker compose -f docker-compose-angular.yml --env-file cuatesangular-variables.env up -d
+# docker compose -f docker-compose-angular.yml --env-file cuatesangular-variables.env down
+## -f specify docker-compose file
+## --env-file specify environment file
+## -d detached mode
+## -p project name
+## Below are examples of using the -p flag to give it a project name if not given in the environment file
+## i.e. docker compose -f docker-compose-angular.yml --env-file cuatesangular-variables.env -p angularmoviefeed up -d
+## i.e. docker compose -f docker-compose-angular.yml --env-file cuatesangular-variables.env p angularmoviefeed down
+## Update one container without downing all containers
+## docker compose -f docker-compose-angular.yml --env-file cuatesangular-variables.env pull [container_name]
+## docker compose -f docker-compose-angular.yml --env-file cuatesangular-variables.env up -d [container_name]
+## docker image prune
+# docker stop angularmoviefeed
+# docker rm angularmoviefeed
+# docker stop angulartvfeed
+# docker rm angulartvfeed
+# docker stop angularnewsfeed
+# docker rm angularnewsfeed
+services:
+  angularmoviefeed:
+    build:
+      context: ./angularmoviefeed/
+      args:
+        TIMEZONE_LOCATION: ${TIMEZONE_LOCATION}
+    container_name: angularmoviefeed
+    environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - TZ=${TIMEZONE_LOCATION}
+    ports:
+      - ${NGMF_EXTERNAL_PORT}:${NGMF_EXTERNAL_PORT}
+    restart: unless-stopped
+
+  angulartvfeed:
+    build:
+      context: ./angulartvfeed/
+      args:
+        TIMEZONE_LOCATION: ${TIMEZONE_LOCATION}
+    container_name: angulartvfeed
+    environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - TZ=${TIMEZONE_LOCATION}
+    ports:
+      - ${NGTF_EXTERNAL_PORT}:${NGTF_EXTERNAL_PORT}
+    restart: unless-stopped
+
+  angularnewsfeed:
+    build:
+      context: ./angularnewsfeed/
+      args:
+        TIMEZONE_LOCATION: ${TIMEZONE_LOCATION}
+    container_name: angularnewsfeed
+    environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - TZ=${TIMEZONE_LOCATION}
+    ports:
+      - ${NGNF_EXTERNAL_PORT}:${NGNF_EXTERNAL_PORT}
+    restart: unless-stopped
+
+networks:
+  default:
+    name: docker-npm-network
+    external: true
