@@ -8,10 +8,11 @@ version: "3"
 ## Below are examples of using the -p flag to give it a project name if not given in the environment file
 ## i.e. docker compose -f docker-compose-cuatesnpm.yml --env-file cuatesnpm-variables.env -p cuates-webserver up -d
 ## i.e. docker compose -f docker-compose-cuatesnpm.yml --env-file cuatesnpm-variables.env -p cuates-webserver down
-## Update one container without downing all containers and prune unused images
-# docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env pull nginxproxymanager
-# docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env up -d nginxproxymanager
-# docker image prune
+## Update all or one container(s) without downing all container(s)
+# docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env pull [container_name]
+# docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env up -d [container_name]
+## Remove dangling and or unused images
+## i.e. docker image prune
 # docker stop nginxproxymanager
 # docker rm nginxproxymanager
 # docker stop mariadbnpm
@@ -29,7 +30,6 @@ services:
       - TZ=${TIMEZONE_LOCATION}
     volumes:
       - ${NPMS_DATA_PATH}:/data
-      - ${NPMS_LOG_PATH}:/app/logs
       - ${NPMS_LETSENCRYPT_PATH}:/etc/letsencrypt
     ports:
       # These ports are in format <host-port>:<container-port>
