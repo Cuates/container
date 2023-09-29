@@ -29,8 +29,6 @@ version: "1.0"
 # docker rm whisparr
 # docker stop jellyseerr
 # docker rm jellyseerr
-# docker stop komga
-# docker rm komga
 # docker stop kavita
 # docker rm kavita
 services:
@@ -160,23 +158,6 @@ services:
       - ${JLYS_CONFIG_PATH}:/app/config
     ports:
       - ${JLYS_EXTERNAL_PORT}:${JLYS_INTERNAL_PORT}
-    restart: unless-stopped
-
-  komga:
-    image: ${KMGA_OF_CONTAINER_IMAGE}
-    container_name: komga
-    volumes:
-      - ${KMGA_CONFIG_PATH}:/config
-      - ${QBT_DOWNLOADS_PATH}\\ebook_download:/ebook_download
-      - ${QBT_DOWNLOADS_PATH}\\ebook_anime_download:/ebook_anime_download
-    environment:
-      # - PUID=${PUID_VALUE}
-      # - PGID=${PGID_VALUE}
-      - JAVA_TOOL_OPTIONS=${KMGA_MEMORY_LIMIT}
-      - SERVER_SERVLET_CONTEXT_PATH=${KMGA_BASE_URL}
-      - TZ=${TIMEZONE_LOCATION}
-    ports:
-      - ${KMGA_EXTERNAL_PORT}:${KMGA_INTERNAL_PORT}
     restart: unless-stopped
 
   kavita:
