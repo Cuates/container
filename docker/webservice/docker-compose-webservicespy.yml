@@ -1,0 +1,92 @@
+version: '2'
+# docker compose -f docker-compose-webservicespy.yml --env-file cuateswebservice-variables.env up -d
+# docker compose -f docker-compose-webservicespy.yml --env-file cuateswebservice-variables.env down
+## -f specify docker-compose file
+## --env-file specify environment file
+## -d detached mode
+## -p project name
+## Below are examples of using the -p flag to give it a project name if not given in the environment file
+## i.e. docker compose -f docker-compose-webservicespy.yml --env-file cuateswebservice-variables.env -p cuates-torrent up -d
+## i.e. docker compose -f docker-compose-webservicespy.yml --env-file cuateswebservice-variables.env p cuates-torrent down
+## Update all or one container(s) without downing all container(s)
+## docker compose -f docker-compose-webservicespy.yml --env-file cuateswebservice-variables.env pull [container_name]
+## docker compose -f docker-compose-webservicespy.yml --env-file cuateswebservice-variables.env up -d [container_name]
+## Remove dangling and or unused images
+## i.e. docker image prune
+# docker stop newsfeedpy
+# docker rm newsfeedpy
+# docker stop tvfeedpy
+# docker rm tvfeedpy
+# docker stop moviefeedpy
+# docker rm moviefeedpy
+# docker stop controlmediafeedpy
+# docker rm controlmediafeedpy
+services:
+  newsfeedpy:
+    build:
+      context: newsfeedwebservice
+      args:
+        TIMEZONE_LOCATION: ${TIMEZONE_LOCATION}
+    container_name: newsfeedpy
+    environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - TZ=${TIMEZONE_LOCATION}
+    volumes:
+      - ${NFWS_PATH}:/usr/local/src/newsfeedwebservice
+    ports:
+      - ${NFWS_EXTERNAL_PORT}:${NFWS_INTERNAL_PORT}
+    restart: unless-stopped
+
+  tvfeedpy:
+    build:
+      context: tvfeedwebservice
+      args:
+        TIMEZONE_LOCATION: ${TIMEZONE_LOCATION}
+    container_name: tvfeedpy
+    environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - TZ=${TIMEZONE_LOCATION}
+    volumes:
+      - ${TFWS_PATH}:/usr/local/src/tvfeedwebservice
+    ports:
+      - ${TFWS_EXTERNAL_PORT}:${TFWS_INTERNAL_PORT}
+    restart: unless-stopped
+
+  moviefeedpy:
+    build:
+      context: moviefeedwebservice
+      args:
+        TIMEZONE_LOCATION: ${TIMEZONE_LOCATION}
+    container_name: moviefeedpy
+    environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - TZ=${TIMEZONE_LOCATION}
+    volumes:
+      - ${MFWS_PATH}:/usr/local/src/moviefeedwebservice
+    ports:
+      - ${MFWS_EXTERNAL_PORT}:${MFWS_INTERNAL_PORT}
+    restart: unless-stopped
+
+  controlmediafeedpy:
+    build:
+      context: controlmediafeedwebservice
+      args:
+        TIMEZONE_LOCATION: ${TIMEZONE_LOCATION}
+    container_name: controlmediafeedpy
+    environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - TZ=${TIMEZONE_LOCATION}
+    volumes:
+      - ${CFWS_PATH}:/usr/local/src/controlmediafeedwebservice
+    ports:
+      - ${CFWS_EXTERNAL_PORT}:${CFWS_INTERNAL_PORT}
+    restart: unless-stopped
+
+networks:
+  default:
+    name: docker-npm-network
+    external: true
