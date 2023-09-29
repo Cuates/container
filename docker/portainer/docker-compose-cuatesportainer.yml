@@ -8,10 +8,11 @@ version: "1.0"
 ## Below are examples of using the -p flag to give it a project name if not given in the environment file
 ## i.e. docker compose -f docker-compose-cuatesportainer.yml --env-file cuatesportainer-variables.env -p cuates-portainer up -d
 ## i.e. docker compose -f docker-compose-cuatesportainer.yml --env-file cuatesportainer-variables.env -p cuates-portainer down
-## Update one container without downing all containers and prune unused images
-# docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env pull portainer
-# docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env up -d portainer
-# docker image prune
+## Update all or one container(s) without downing all container(s)
+# docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env pull [container_name]
+# docker compose -f docker-compose-cuatesserver.yml --env-file cuatesserver-variables.env up -d [container_name]
+## Remove dangling and or unused images
+## i.e. docker image prune
 # docker stop portainer
 # docker rm portainer
 services:
