@@ -1,0 +1,28 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pyodbc = "*"
+psycopg2 = "*"
+psycopg2-binary = "*"
+flask = "*"
+flask-restful = "*"
+flask-cors = "*"
+gunicorn = "*"
+uwsgi = "*"
+pytz = "*"
+tzlocal = "*"
+sqlalchemy = "*"
+requests = "*"
+urllib3 = "*"
+html3 = "*"
+mysqlclient = "*"
+feedparser = "*"
+pymysql = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11.5"
