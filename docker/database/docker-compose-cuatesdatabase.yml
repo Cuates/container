@@ -11,7 +11,7 @@ version: "1.0"
 ## Update all or one container(s) without downing all container(s)
 ## i.e. docker compose -f docker-compose-cuatesdatabase.yml --env-file cuatesserver-variables.env pull [container_name]
 ## i.e. docker compose -f docker-compose-cuatesdatabase.yml --env-file cuatesserver-variables.env up -d [container_name]
-## Remove dangling images
+## Remove dangling and or unused images
 ## i.e. docker image prune
 # docker stop mariada
 # docker rm mariada
