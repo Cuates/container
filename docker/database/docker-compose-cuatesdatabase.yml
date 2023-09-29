@@ -8,14 +8,17 @@ version: "1.0"
 ## Below are examples of using the -p flag to give it a project name if not given in the environment file
 ## i.e. docker compose -f docker-compose-cuatesdatabase.yml --env-file cuatesdatabase-variables.env -p cuates-database up -d
 ## i.e. docker compose -f docker-compose-cuatesdatabase.yml --env-file cuatesdatabase-variables.env -p cuates-database down
+## Update all or one container(s) without downing all container(s)
+## i.e. docker compose -f docker-compose-cuatesdatabase.yml --env-file cuatesserver-variables.env pull [container_name]
+## i.e. docker compose -f docker-compose-cuatesdatabase.yml --env-file cuatesserver-variables.env up -d [container_name]
+## Remove dangling images
+## i.e. docker image prune
 # docker stop mariada
 # docker rm mariada
 # docker stop postgres
 # docker rm postgres
 # docker stop mssql
 # docker rm mssql
-# docker stop adminer
-# docker rm adminer
 services:
   mariadb:
     image: ${MRDB_OF_CONTAINER_IMAGE}
@@ -70,18 +73,6 @@ services:
       - ${DB_BACKUP}:/dbbackup
     ports:
       - ${MSDB_EXTERNAL_PORT}:${MSDB_INTERNAL_PORT}
-    restart: unless-stopped
-
-  adminer:
-    image: ${ADMR_OF_CONTAINER_IMAGE}
-    container_name: adminer
-    environment:
-      # - PUID=${PUID_VALUE}
-      # - PGID=${PGID_VALUE}
-      - TZ=${TIMEZONE_LOCATION}
-    # volumes:
-    ports:
-      - ${ADMR_EXTERNAL_PORT}:${ADMR_INTERNAL_PORT}
     restart: unless-stopped
 
 networks:
