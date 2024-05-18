@@ -27,6 +27,8 @@ version: "1.0"
 # docker rm lidarr
 # docker stop whisparr
 # docker rm whisparr
+# docker stop flaresolverr
+# docker rm flaresolverr
 # docker stop jellyseerr
 # docker rm jellyseerr
 # docker stop kavita
@@ -144,6 +146,20 @@ services:
       - ${QBT_DOWNLOADS_PATH}\\movie_x_download:/movie_x_download
     ports:
       - ${WHSR_EXTERNAL_PORT}:${WHSR_INTERNAL_PORT}
+    restart: unless-stopped
+
+  flaresolverr:
+    image: ${FLSR_HT_CONTAINER_IMAGE}
+    container_name: flaresolverr
+    environment:
+      # - PUID=${PUID_VALUE}
+      # - PGID=${PGID_VALUE}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_HTML=${LOG_HTML:-false}
+      - CAPTCHA_SOLVER=${CAPTCHA_SOLVER:-none}
+      - TZ=${TIMEZONE_LOCATION}
+    ports:
+      - ${FLSR_EXTERNAL_PORT}:${FLSR_INTERNAL_PORT}
     restart: unless-stopped
 
   jellyseerr:
