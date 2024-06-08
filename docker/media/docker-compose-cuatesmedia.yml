@@ -41,6 +41,8 @@ services:
       # - PUID=${PUID_VALUE}
       # - PGID=${PGID_VALUE}
       - TZ=${TIMEZONE_LOCATION}
+      - JELLYFIN_FFmpeg__probesize=${JELLYFIN_FFMPEG_PROBESIZE}
+      - JELLYFIN_FFmpeg__analyzeduration=${JELLYFIN_FFMPEG_ANALYZEDURATION}
     volumes:
       - ${JLYF_CONFIG_PATH}:/config
       - ${JLYF_CACHE_PATH}:/cache
