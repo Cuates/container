@@ -1,5 +1,8 @@
-# Docker setup and Configuration
-> Docker compose yml and env files to build containers
+# Docker Setup and Configuration
+> Docker compose YAML and env files to build containers
+
+## Python Script to perform docker compose and purge command in bulk
+* [Docker Compose Manager Python](https://github.com/Cuates/container/blob/main/docker/docker_compose_manager.py)
 
 ## Table of Contents
 * [Command](#command)
