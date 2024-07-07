@@ -13,7 +13,7 @@ Dependencies:
     - pyyaml
 Pip:
     Make sure your pip is updated
-    python.exe -m pip install --upgrade pip
+    python.exe -m pip3 install --upgrade pip
 
 Windows:
     If warning on a Windows machine perform the following
@@ -23,7 +23,7 @@ Windows:
 Installation:
     Ensure you have Docker installed and running on your machine.
     Install the required Python package:
-        pip install pyyaml
+        pip3 install pyyaml
 
 Description:
     - DockerComposeManager: A class to manage Docker Compose projects.
