@@ -43,7 +43,6 @@ Example:
     python docker_compose_manager.py
 """
 
-import time
 from datetime import datetime
 import subprocess
 import os
