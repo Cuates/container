@@ -9,11 +9,11 @@ Usage:
     python docker_compose_manager.py
 
 Dependencies:
-    - docker
+    - docker desktop
     - pyyaml
 Pip:
     Make sure your pip is updated
-    python.exe -m pip3 install --upgrade pip
+    python.exe -m pip install --upgrade pip
 
 Windows:
     If warning on a Windows machine perform the following
@@ -23,7 +23,7 @@ Windows:
 Installation:
     Ensure you have Docker installed and running on your machine.
     Install the required Python package:
-        pip3 install pyyaml
+        pip install pyyaml
 
 Description:
     - DockerComposeManager: A class to manage Docker Compose projects.
@@ -44,10 +44,26 @@ Example:
 """
 
 import time
-from datetime import timedelta
+from datetime import datetime
 import subprocess
 import os
 import yaml
+
+# ANSI color escape sequences for RGB-like colors
+def rgb_color(r, g, b, text):
+    """
+    Generate ANSI escape sequences for RGB-like color formatting in terminal output.
+
+    Parameters:
+    - r (int): Red component (0-255).
+    - g (int): Green component (0-255).
+    - b (int): Blue component (0-255).
+    - text (str): Text to be colored.
+
+    Returns:
+    - str: ANSI escape sequence for colored text.
+    """
+    return f"\033[38;2;{r};{g};{b}m{text}\033[0m"
 
 class DockerComposeManager:
     """
@@ -84,7 +100,7 @@ class DockerComposeManager:
         try:
             subprocess.run(cmd, check=True)
         except subprocess.CalledProcessError as e:
-            print(f"Error {e.returncode} while {action}ing container {container_name}")
+            print(rgb_color(255, 0, 0, f"Error {e.returncode} while {action}ing container {container_name}")) # rgb(255, 0, 0)
             return False
         return True
 
@@ -103,7 +119,7 @@ class DockerComposeManager:
                 if output.stdout.decode('utf-8').strip() == container_name:
                     return True
         except subprocess.CalledProcessError as e:
-            print(f"Error {e.returncode} while checking container status: {e.stderr.decode('utf-8').strip()}")
+            print(rgb_color(255, 0, 0, f"Error {e.returncode} while checking container status: {e.stderr.decode('utf-8').strip()}")) # rgb(255, 0, 0)
         return False
 
     @staticmethod
@@ -117,9 +133,9 @@ class DockerComposeManager:
         try:
             output = subprocess.run(cmd, stdout=subprocess.PIPE, check=True)
             if output.stdout is not None:
-                print(output.stdout.decode('utf-8').strip())
+                print(rgb_color(0, 255, 0, f"{output.stdout.decode('utf-8').strip()}")) # rgb(0, 255, 0)
         except subprocess.CalledProcessError as e:
-            print(f"Error {e.returncode} while pruning Docker images: {e.stderr.decode('utf-8').strip()}")
+            print(rgb_color(255, 0, 0, f"Error {e.returncode} while pruning Docker images: {e.stderr.decode('utf-8').strip()}")) # rgb(255, 0, 0)
             return False
         return True
 
@@ -138,17 +154,17 @@ class DockerComposeManager:
                 for service, _ in compose_data.get('services', {}).items():
                     container_name = service
                     if action == "down" and self.check_container_status(container_name):
-                        print(f"  Taking down container {container_name}...")
+                        print(rgb_color(255, 255, 0, f"  Taking down container {container_name}...")) # rgb(255, 255, 0)
                         if not config.run_docker_compose(action, container_name):
                             errors = True
                     elif action == "up":
-                        print(f"  Bringing up container {container_name}...")
+                        print(rgb_color(255, 255, 0, f"  Bringing up container {container_name}...")) # rgb(255, 255, 0)
                         if not config.run_docker_compose(action, container_name):
                             errors = True
         if errors:
-            print(f"Error: One or more containers failed to {action}.")
+            print(rgb_color(255, 0, 0, f"Error: One or more containers failed to {action}.")) # rgb(255, 0, 0)
         else:
-            print(f"All containers {action} successfully.")
+            print(rgb_color(0, 255, 0, f"All containers {action} successfully.")) # rgb(0, 255, 0)
 
 def main():
     """
@@ -159,7 +175,7 @@ def main():
     """
     start_time = time.time()
     start_timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))
-    print(f"Script started at {start_timestamp}...")
+    print(rgb_color(0, 255, 255, f"Script started at {start_timestamp}...")) # rgb(0, 255, 255)
 
     docker_configs = [
         DockerComposeManager("<path/to/docker/directory/01>", "<docker_compose_filename_01.yml>", "<docker_compose_environment_filename_01.env>"),
@@ -170,15 +186,18 @@ def main():
     manager = DockerComposeManager(None, None, None)
     manager.process_docker_configs(docker_configs, "down")
     if not DockerComposeManager.prune_docker_images():
-        print("Error: Failed to prune Docker images.")
+        print(rgb_color(255, 0, 0, "Error: Failed to prune Docker images.")) # rgb(255, 0, 0)
     else:
-        print("Docker images pruned successfully.")
+        print(rgb_color(0, 255, 0, "Docker images pruned successfully.")) # rgb(0, 255, 0)
     manager.process_docker_configs(docker_configs, "up")
 
-    end_time = time.time()
-    end_timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(end_time))
-    elapsed_time = end_time - start_time
-    print(f"Script finished at {end_timestamp}.\nTotal execution time: {str(timedelta(seconds=elapsed_time))}")
+    # Get the end time
+    end_time = datetime.now()
+    print(rgb_color(0, 255, 255, f"Script finished at: {end_time.strftime('%Y-%m-%d %H:%M:%S')}")) # rgb(0, 255, 255)
+
+    # Calculate and print the execution time
+    execution_time = end_time - start_time
+    print(rgb_color(201, 103, 28, f"Total execution time: {str(execution_time)}")) # rgb(201, 103, 28)
 
 if __name__ == "__main__":
     main()
