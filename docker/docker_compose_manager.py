@@ -173,9 +173,9 @@ def main():
 
     :return: None
     """
-    start_time = time.time()
-    start_timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))
-    print(rgb_color(0, 255, 255, f"Script started at {start_timestamp}...")) # rgb(0, 255, 255)
+    # Get the start time
+    start_time = datetime.now()
+    print(rgb_color(0, 255, 255, f"Script started at: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")) # rgb(0, 255, 255)
 
     docker_configs = [
         DockerComposeManager("<path/to/docker/directory/01>", "<docker_compose_filename_01.yml>", "<docker_compose_environment_filename_01.env>"),
