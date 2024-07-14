@@ -64,15 +64,6 @@ def rgb_color(r, g, b, text):
     """
     return f"\033[38;2;{r};{g};{b}m{text}\033[0m"
 
-def make_raw(path):
-    """
-    Convert a file path to a raw string.
-
-    :param path: File path to convert
-    :return: Raw string version of the file path
-    """
-    return fr"{path}"
-
 class DockerComposeManager:
     """
     A class to manage Docker Compose projects, taking down or bringing up containers as specified.
@@ -186,9 +177,9 @@ def main():
     print(rgb_color(0, 255, 255, f"Script started at: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")) # rgb(0, 255, 255)
 
     docker_configs = [
-        DockerComposeManager(make_raw("<path/to/docker/directory/01>"), "<docker_compose_filename_01.yml>", "<docker_compose_environment_filename_01.env>"),
-        DockerComposeManager(make_raw("<path/to/docker/directory/02>"), "<docker_compose_filename_02.yml>", "<docker_compose_environment_filename_02.env>"),
-        DockerComposeManager(make_raw("<path/to/docker/directory/03>"), "<docker_compose_filename_03.yml>", "<docker_compose_environment_filename_03.env>")
+        DockerComposeManager(r"<path/to/docker/directory/01>", "<docker_compose_filename_01.yml>", "<docker_compose_environment_filename_01.env>"),
+        DockerComposeManager(r"<path/to/docker/directory/02>", "<docker_compose_filename_02.yml>", "<docker_compose_environment_filename_02.env>"),
+        DockerComposeManager(r"<path/to/docker/directory/03>", "<docker_compose_filename_03.yml>", "<docker_compose_environment_filename_03.env>")
     ]
 
     manager = DockerComposeManager(None, None, None)
