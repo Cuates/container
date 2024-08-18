@@ -1,0 +1,19 @@
+{
+  "docker_configs": [
+    {
+      "docker_dir": "/path/to/docker/container01",
+      "compose_file": "docker-compose-container01.yml",
+      "env_file": "container01-variables.env"
+    },
+    {
+      "docker_dir": "/path/to/docker/container02",
+      "compose_file": "docker-compose-container02.yml",
+      "env_file": "container02-variables.env"
+    },
+    {
+      "docker_dir": "/path/to/docker/container03",
+      "compose_file": "docker-compose-container03.yml",
+      "env_file": "container03-variables.env"
+    }
+  ]
+}
