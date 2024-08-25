@@ -36,32 +36,32 @@ Example:
 """
 
 import subprocess
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from typing import List, Dict, Any
 import yaml
 
-def setup_logging():
+def setup_logging() -> None:
     """
     Set up logging with a rotating file handler.
 
     Returns:
     - None
     """
-    # Get the full path of the script
-    script_path = Path(__file__).resolve()
-    script_directory = script_path.parent
-    script_filename = script_path.stem
+    script_path: Path = Path(__file__).resolve()
+    script_directory: Path = script_path.parent
+    script_filename: str = script_path.stem
+    log_file: Path = script_directory / f"{script_filename}.log"
 
-    log_file = script_directory / f"{script_filename}.log"
-    handler = RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler: RotatingFileHandler = RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
+    formatter: logging.Formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     logging.getLogger().addHandler(handler)
     logging.getLogger().setLevel(logging.INFO)
 
-def rgb_color(r, g, b, text):
+def rgb_color(r: int, g: int, b: int, text: str) -> str:
     """
     Generate ANSI escape sequences for RGB-like color formatting in terminal output.
 
@@ -81,7 +81,7 @@ class DockerComposeManager:
     A class to manage Docker Compose projects, taking down or bringing up containers as specified.
     """
 
-    def __init__(self, docker_dir, compose_file, env_file):
+    def __init__(self, docker_dir: Path, compose_file: Path, env_file: Path):
         """
         Initialize DockerComposeManager with directory, compose file, and environment file.
 
@@ -90,11 +90,11 @@ class DockerComposeManager:
         - compose_file (Path): Path to the Docker Compose YAML file.
         - env_file (Path): Path to the environment file.
         """
-        self.docker_dir = Path(docker_dir)
-        self.compose_file = self.docker_dir / compose_file
-        self.env_file = self.docker_dir / env_file
+        self.docker_dir: Path = Path(docker_dir)
+        self.compose_file: Path = self.docker_dir / compose_file
+        self.env_file: Path = self.docker_dir / env_file
 
-    def run_docker_compose(self, action, container_name):
+    def run_docker_compose(self, action: str, container_name: str) -> bool:
         """
         Run a Docker Compose command with the specified action and container name.
 
@@ -105,7 +105,7 @@ class DockerComposeManager:
         Returns:
         - bool: True if the command runs successfully, False otherwise.
         """
-        cmd = [
+        cmd: List[str] = [
             'docker', 'compose', '-f', str(self.compose_file),
             '--env-file', str(self.env_file), action
         ]
@@ -122,7 +122,7 @@ class DockerComposeManager:
             return False
 
     @staticmethod
-    def check_container_status(container_name):
+    def check_container_status(container_name: str) -> bool:
         """
         Check if a Docker container exists and is running.
 
@@ -132,26 +132,25 @@ class DockerComposeManager:
         Returns:
         - bool: True if the container exists and is running, False otherwise.
         """
-        cmd = ['docker', 'container', 'ls', '-a', '--format', '{{.Names}}', '--filter', f'name={container_name}']
+        cmd: List[str] = ['docker', 'container', 'ls', '-a', '--format', '{{.Names}}', '--filter', f'name={container_name}']
         try:
-            output = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-            if output.stdout and output.stdout.decode('utf-8').strip() == container_name:
-                return True
+            output: subprocess.CompletedProcess = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+            return bool(output.stdout and output.stdout.decode('utf-8').strip() == container_name)
         except subprocess.CalledProcessError as e:
             logging.error(rgb_color(255, 0, 0, "Error %s while checking container status: %s"), e.returncode, e.stderr.decode('utf-8').strip())
-        return False
+            return False
 
     @staticmethod
-    def prune_docker_images():
+    def prune_docker_images() -> bool:
         """
         Run the Docker image prune command to remove unused images.
 
         Returns:
         - bool: True if the command runs successfully, False otherwise.
         """
-        cmd = ['docker', 'image', 'prune', '-a', '-f']
+        cmd: List[str] = ['docker', 'image', 'prune', '-a', '-f']
         try:
-            output = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+            output: subprocess.CompletedProcess = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
             if output.stdout:
                 logging.info(rgb_color(0, 255, 0, "%s"), output.stdout.decode('utf-8').strip())
             return True
@@ -159,7 +158,7 @@ class DockerComposeManager:
             logging.error(rgb_color(255, 0, 0, "Error %s while pruning Docker images: %s"), e.returncode, e.stderr.decode('utf-8').strip())
             return False
 
-def process_docker_configs(docker_configs, action):
+def process_docker_configs(docker_configs: List[DockerComposeManager], action: str) -> None:
     """
     Process a list of Docker Compose configurations, taking down or bringing up containers as specified.
 
@@ -170,21 +169,21 @@ def process_docker_configs(docker_configs, action):
     Returns:
     - None
     """
-    errors = False
+    errors: bool = False
     for config in docker_configs:
         try:
             with open(config.compose_file, 'r', encoding='utf-8') as file:
-                compose_data = yaml.safe_load(file)
-                for service in compose_data.get('services', {}):
-                    container_name = service
-                    if action == "down" and DockerComposeManager.check_container_status(container_name):
-                        logging.info(rgb_color(255, 255, 0, "Taking down container %s..."), container_name)
-                        if not config.run_docker_compose(action, container_name):
-                            errors = True
-                    elif action == "up":
-                        logging.info(rgb_color(255, 255, 0, "Bringing up container %s..."), container_name)
-                        if not config.run_docker_compose(action, container_name):
-                            errors = True
+                compose_data: Dict[str, Any] = yaml.safe_load(file)
+            for service in compose_data.get('services', {}):
+                container_name: str = service
+                if action == "down" and DockerComposeManager.check_container_status(container_name):
+                    logging.info(rgb_color(255, 255, 0, "Taking down container %s..."), container_name)
+                    if not config.run_docker_compose(action, container_name):
+                        errors = True
+                elif action == "up":
+                    logging.info(rgb_color(255, 255, 0, "Bringing up container %s..."), container_name)
+                    if not config.run_docker_compose(action, container_name):
+                        errors = True
         except FileNotFoundError:
             logging.error(rgb_color(255, 0, 0, "Compose file '%s' not found."), config.compose_file)
             errors = True
@@ -197,7 +196,7 @@ def process_docker_configs(docker_configs, action):
     else:
         logging.info(rgb_color(0, 255, 0, "All containers %s successfully."), action)
 
-def load_config(config_file):
+def load_config(config_file: str) -> List[DockerComposeManager]:
     """
     Load Docker Compose configurations from a YAML file.
 
@@ -209,7 +208,7 @@ def load_config(config_file):
     """
     try:
         with open(config_file, 'r', encoding='utf-8') as file:
-            config_data = yaml.safe_load(file)
+            config_data: Dict[str, Any] = yaml.safe_load(file)
     except FileNotFoundError:
         logging.error("Configuration file '%s' not found.", config_file)
         return []
@@ -217,13 +216,14 @@ def load_config(config_file):
         logging.error("Error decoding YAML from the configuration file: %s", e)
         return []
 
-    docker_configs = [
+    docker_configs: List[DockerComposeManager] = [
         DockerComposeManager(Path(config['docker_dir']), Path(config['compose_file']), Path(config['env_file']))
         for config in config_data.get('docker_configs', [])
     ]
+
     return docker_configs
 
-def main():
+def main() -> None:
     """
     Main entry point of the script. Processes Docker Compose projects, takes down running containers,
     prunes Docker images, and brings up containers.
@@ -232,13 +232,11 @@ def main():
     - None
     """
     setup_logging()
-
-    start_time = datetime.now()
+    start_time: datetime = datetime.now()
     logging.info(rgb_color(0, 255, 255, "Script started at: %s"), start_time.strftime('%Y-%m-%d %H:%M:%S'))
 
-    docker_configs = load_config('/path/to/docker_compose_manager_config.json')
+    docker_configs: List[DockerComposeManager] = load_config('/path/to/docker_compose_manager_config.json')
 
-    # Use the standalone function to process Docker configurations
     process_docker_configs(docker_configs, "down")
 
     if not DockerComposeManager.prune_docker_images():
@@ -248,10 +246,9 @@ def main():
 
     process_docker_configs(docker_configs, "up")
 
-    end_time = datetime.now()
+    end_time: datetime = datetime.now()
     logging.info(rgb_color(0, 255, 255, "Script finished at: %s"), end_time.strftime('%Y-%m-%d %H:%M:%S'))
-
-    execution_time = end_time - start_time
+    execution_time: timedelta = end_time - start_time
     logging.info(rgb_color(201, 103, 28, "Total execution time: %s"), str(execution_time))
 
 if __name__ == "__main__":
