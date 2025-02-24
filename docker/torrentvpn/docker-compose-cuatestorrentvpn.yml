@@ -49,7 +49,7 @@ services:
     environment:
       # - PUID=${PUID_VALUE}
       # - PGID=${PGID_VALUE}
-      - QBT_EULA=${QBT_EULA}
+      - QBT_LEGAL_NOTICE=${QBT_LEGAL_NOTICE}
       - QBT_WEBUI_PORT=${QBT_EXTERNAL_PORT}
       - TZ=${TIMEZONE_LOCATION}
     volumes:
