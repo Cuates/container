@@ -960,7 +960,7 @@ def main() -> None:
             enforce_ports=False
         ) # Adjust these flags as needed True or False
 
-        docker_network_name = "docker-npm-network"  # 🔁 Replace with your actual internal Docker network
+        docker_network_name = "<docker-network-name>"  # 🔁 Replace with your actual internal Docker network
         docker_network_ok = DockerComposeManager.ensure_docker_network(docker_network_name)
 
         if network_firewall_ok and docker_network_ok:
