@@ -47,7 +47,17 @@ from yaml import YAMLError
 from alive_progress import alive_it
 from tqdm import tqdm
 
-REQUIRED_PORTS = [80, 443]
+### BEGIN Modify to your liking
+REQUIRED_PORTS = [<port_01>, <port_02>]
+
+DOCKER_NETWORK_NAME = "<docker-network>"
+
+LOAD_CONFIG_PATH = r'path/to/docker_compose_manager_config.json'
+
+ENFORCE_ACTIVE_PROFILE = False
+ENFORCE_DOCKER_BACKEND = False
+ENFORCE_PORTS = False
+### END Modify to your liking
 
 FIREWALL_PROFILE_MAP = {
     "1": "Domain",
@@ -494,7 +504,7 @@ def evaluate_firewall_conditions(
         data (Dict[str, Any]): Parsed JSON output from PowerShell.
         enforce_active_profile (bool): Enforce that the active network profile is enabled.
         enforce_docker_backend (bool): Check Docker backend rule scope for Public and Private profiles.
-        enforce_ports (bool): Check inbound TCP port rules for ports 80 and 443.
+        enforce_ports (bool): Check inbound TCP port rules for ports.
 
     Returns:
         bool: True if all enabled checks pass without blocked rules; False otherwise.
@@ -558,7 +568,7 @@ def evaluate_docker_rules(data: Dict[str, Any]) -> Tuple[bool, bool]:
 
         (allowed if action == "allow" else blocked).setdefault(profile, []).append(label)
 
-    docker_ok = all(profile in allowed and allowed[profile] for profile in ("Public", "Private"))
+    docker_ok = any(profile in allowed and allowed[profile] for profile in ("Public", "Private"))
     has_blocked = any(blocked.get(profile) for profile in ("Public", "Private"))
 
     logging.info("[FIREWALL] Docker Backend Rule Scope:")
@@ -578,7 +588,7 @@ def evaluate_docker_rules(data: Dict[str, Any]) -> Tuple[bool, bool]:
 
 def evaluate_port_rules(data: Dict[str, Any]) -> bool:
     """
-    Assesses inbound TCP firewall rules for ports 80 and 443.
+    Assesses inbound TCP firewall rules for ports.
 
     Args:
         data (Dict[str, Any]): Parsed JSON containing port rule metadata.
@@ -597,9 +607,10 @@ def evaluate_port_rules(data: Dict[str, Any]) -> bool:
             status["all_profiles"]
         )) else "❌"
 
+        action_str = status["action"] if status["action"] else "None"
         logging.info("  Port %s: %s", port, icon)
         logging.info("    Enabled: %s", "Yes" if status["enabled"] else "No")
-        logging.info("    Action: %s", status["action"])
+        logging.info("    Action: %s", action_str)
         if status["all_profiles"]:
             logging.info("    Applies to Profiles: All")
         else:
@@ -697,17 +708,19 @@ def check_docker_firewall(
         """)
 
     if enforce_ports:
-        ps_blocks.append(r"""
+        ps_ports = ', '.join(str(p) for p in REQUIRED_PORTS)
+        ps_blocks.append(f"""
+        $REQUIRED_PORTS = @({ps_ports})
         $portRules = @()
-        $inboundRules = Get-NetFirewallRule -Direction Inbound | Where-Object {
-            $_.Name -match "^\{.*\}$" -or $_.Group -eq $null
-        }
-        foreach ($rule in $inboundRules) {
+        $inboundRules = Get-NetFirewallRule -Direction Inbound | Where-Object {{
+            $_.Name -match "^\\{{.*\\}}$" -or $_.Group -eq $null
+        }}
+        foreach ($rule in $inboundRules) {{
             $portFilters = $rule | Get-NetFirewallPortFilter
-            foreach ($portFilter in $portFilters) {
-                if ($portFilter.Protocol -eq "TCP" -and ($portFilter.LocalPort -eq 80 -or $portFilter.LocalPort -eq 443)) {
+            foreach ($portFilter in $portFilters) {{
+                if ($portFilter.Protocol -eq "TCP" -and $REQUIRED_PORTS -contains [int]$portFilter.LocalPort) {{
                     $decodedProfile = Convert-FirewallProfile -Profile $rule.Profile
-                    $portRules += [PSCustomObject]@{
+                    $portRules += [PSCustomObject]@{{
                         Name        = [string]$rule.Name
                         DisplayName = [string]$rule.DisplayName
                         Enabled     = [string]$rule.Enabled
@@ -715,10 +728,10 @@ def check_docker_firewall(
                         Profile     = $decodedProfile
                         Protocol    = [string]$portFilter.Protocol
                         LocalPort   = [string]$portFilter.LocalPort
-                    }
-                }
-            }
-        }
+                    }}
+                }}
+            }}
+        }}
         """)
 
     # 🧩 Final JSON Output Block
@@ -955,17 +968,16 @@ def main() -> None:
     docker_ready = check_docker_running()
     if docker_ready:
         network_firewall_ok = check_docker_firewall(
-            enforce_active_profile=False,
-            enforce_docker_backend=False,
-            enforce_ports=False
+            enforce_active_profile=ENFORCE_ACTIVE_PROFILE,
+            enforce_docker_backend=ENFORCE_DOCKER_BACKEND,
+            enforce_ports=ENFORCE_PORTS
         ) # Adjust these flags as needed True or False
 
-        docker_network_name = "<docker-network-name>"  # 🔁 Replace with your actual internal Docker network
+        docker_network_name = DOCKER_NETWORK_NAME  # 🔁 Replace with your actual internal Docker network
         docker_network_ok = DockerComposeManager.ensure_docker_network(docker_network_name)
 
         if network_firewall_ok and docker_network_ok:
-
-            docker_configs = load_config('<path/to/docker_compose_manager_config.json>')
+            docker_configs = load_config(LOAD_CONFIG_PATH)
 
             process_docker_configs(docker_configs, "down")
 
