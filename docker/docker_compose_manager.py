@@ -387,9 +387,9 @@ def check_docker_running() -> bool:
         bool: True if Docker is responsive; False otherwise.
     """
     try:
-        result = run_command_with_spinner("Checking Docker daemon", ["docker", "info"])
+        result, _ = run_command_with_spinner("Checking Docker daemon", ["docker", "info"])
 
-        if result:
+        if result is not None:
             logging.info("Docker daemon is active.")
             return True
 
