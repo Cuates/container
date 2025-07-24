@@ -47,17 +47,18 @@ from yaml import YAMLError
 from alive_progress import alive_it
 from tqdm import tqdm
 
-### BEGIN Modify to your liking
-REQUIRED_PORTS = [<port_01>, <port_02>]
+REQUIRED_PORTS = [<port_01>, <port_02>, <port_03>]
 
-DOCKER_NETWORK_NAME = "<docker-network>"
+DOCKER_NETWORK_NAME = ["<docker-network-01>", "<docker-network-02>"]
 
-LOAD_CONFIG_PATH = r'path/to/docker_compose_manager_config.json'
+LOAD_CONFIG_PATH = r'<path/to/docker_compose_manager_config.json>'
+
+IGNORE_CONTAINERS_UP = {"<container_name_01>", "<container_name_02>"}
+IGNORE_CONTAINERS_DOWN = {"<container_name_01>", "<container_name_02>"}
 
 ENFORCE_ACTIVE_PROFILE = False
 ENFORCE_DOCKER_BACKEND = False
 ENFORCE_PORTS = False
-### END Modify to your liking
 
 FIREWALL_PROFILE_MAP = {
     "1": "Domain",
@@ -86,7 +87,8 @@ def setup_logging() -> None:
 
     # Console logger with custom RGB wrapper
     console_handler = logging.StreamHandler()
-    console_handler.setFormatter(logging.Formatter("%(message)s"))  # raw text; color added by apply_log_color()
+    # raw text; color added by apply_log_color()
+    console_handler.setFormatter(logging.Formatter("%(message)s"))
 
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
@@ -160,9 +162,10 @@ class DockerComposeManager:
         ]
         if action == "up":
             cmd.extend(["-d", container_name])
+        elif action == "down":
+            cmd.extend([container_name])
         try:
-            subprocess.run(cmd, stderr=subprocess.PIPE, check=True)
-            logging.info("Successfully %sed container %s", action, container_name)
+            subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
             return True
         except subprocess.CalledProcessError as e:
             logging.error("Error %s while %sing container %s: %s", e.returncode, action, container_name, e.stderr.strip())
@@ -206,135 +209,224 @@ class DockerComposeManager:
             return False
 
     @staticmethod
-    def ensure_docker_network(network_name: str) -> bool:
+    def ensure_docker_network(network_names: list[str]) -> bool:
         """
-        Ensure that a Docker internal network exists; create it if not.
+        Ensure that Docker internal networks exist; create them if not.
 
         Args:
-            network_name (str): Name of the Docker network.
+            network_names (list[str]): Names of Docker networks.
 
         Returns:
-            bool: True if it exists or is successfully created; False if creation failed.
+            bool: True if all networks exist or are successfully created; False if any creation fails.
         """
         try:
-            networks = subprocess.run(
+            existing_networks = subprocess.run(
                 ['docker', 'network', 'ls', '--format', '{{.Name}}'],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True
-            )
-            if network_name in networks.stdout.decode('utf-8').splitlines():
-                logging.info("Docker network '%s' already exists.", network_name)
-                return True
+            ).stdout.decode('utf-8').splitlines()
 
-            sys.stdout.write("\n")
-            _, _ = with_spinner_and_timer(
-                f"Creating Docker network: {network_name}",
-                lambda: subprocess.run(
-                    ['docker', 'network', 'create', '--driver', 'bridge', network_name],
-                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True
-                )
-            )
+            failed_networks = []
 
-            logging.info("Docker network '%s' created successfully.", network_name)
+            for name in network_names:
+                if name in existing_networks:
+                    logging.info("Docker network '%s' already exists.", name)
+                    continue
+
+                sys.stdout.write("\n")
+                try:
+                    _, _ = with_spinner_and_timer(
+                        f"Creating Docker network: {name}",
+                        lambda name=name: subprocess.run(
+                            ['docker', 'network', 'create', '--driver', 'bridge', name],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True
+                        )
+                    )
+                    logging.info("Docker network '%s' created successfully.", name)
+
+                except subprocess.CalledProcessError as e:
+                    msg = e.stderr.decode('utf-8').strip() if e.stderr else str(e)
+                    logging.error("Failed to create Docker network '%s': %s", name, msg)
+                    failed_networks.append(name)
+
+            if failed_networks:
+                logging.warning("The following networks failed to create: %s", ", ".join(failed_networks))
+                return False
+
             return True
 
         except subprocess.CalledProcessError as e:
             msg = e.stderr.decode('utf-8').strip() if e.stderr else str(e)
-            logging.error("Error ensuring network '%s': %s", network_name, msg)
+            logging.error("Error listing Docker networks: %s", msg)
             return False
 
 def process_docker_configs(docker_configs: List[DockerComposeManager], action: str) -> None:
     """
-    Perform Docker Compose actions ('up' or 'down') across multiple configurations.
+    Execute a Docker Compose lifecycle action ('up' or 'down') across multiple configurations.
 
-    Displays:
-        - Colored progress bar if multiple services
-        - Spinner + per-container timing if single service
-        - Summarized results with timing at the end
+    This orchestrator:
+        - Loads service definitions from each Compose file
+        - Executes the specified lifecycle action with timing and logging
+        - Tracks success/failure of each container operation
+        - Summarizes timing results in an end-of-run dashboard
+        - Optionally removes orphan containers during 'down' operations
 
     Args:
-        docker_configs (List[DockerComposeManager]): Compose manager instances.
-        action (str): Either 'up' or 'down' to control container lifecycles.
+        docker_configs (List[DockerComposeManager]): A list of initialized Compose manager instances.
+        action (str): Lifecycle action to perform; either 'up' or 'down'.
+
+    Returns:
+        None
     """
     errors = False
-    all_timings: List[Tuple[str, float, bool]] = []
+    all_timings = []
+    expected_services = set()
     total_start = datetime.now()
 
-    for docker_config in docker_configs:
-        try:
-            with open(docker_config.compose_file, 'r', encoding='utf-8') as file:
-                compose_data = yaml.safe_load(file)
+    for config in docker_configs:
+        services = parse_compose_services(config)
+        expected_services.update(services)
 
-            services = list(compose_data.get('services', {}))
-            service_count = len(services)
+        for svc_name in services:
+            # ⏳ Let run_service_action() decide whether to skip
+            success, duration = run_service_action(config, svc_name, action)
+            all_timings.append((svc_name, duration, success))
+            errors |= not success
 
-            if service_count > 1:
-                for service_name in tqdm(
-                    services,
-                    desc=f"{action.upper()} {docker_config.compose_file.name}",
-                    unit="service",
-                    colour="cyan"
-                ):
-                    sys.stdout.write("\n")
-                    logging.info("%s %s...", "Taking down" if action == "down" else "Bringing up", service_name)
+    if action == "down":
+        expected_services.update(IGNORE_CONTAINERS_DOWN)
+        remove_orphan_containers(expected_services)
 
-                    start = time.time()
-                    success = container_task(docker_config, service_name, action)
-                    duration = round(time.time() - start, 2)
-                    all_timings.append((service_name, duration, success))
-
-                    readable = format_time_delta(timedelta(seconds=duration))
-
-                    logging.info("⏱️ %s completed in %s", service_name, readable)
-                    if not success:
-                        errors = True
-
-            elif service_count == 1:
-                service_name = services[0]
-                sys.stdout.write("\n")
-                logging.info("%s %s...", "Taking down" if action == "down" else "Bringing up", service_name)
-
-                title = f"{action.capitalize()} {service_name}"
-                success, duration = run_container_task_with_spinner(title, docker_config, service_name, action)
-
-                all_timings.append((service_name, duration, success))
-                readable = format_time_delta(timedelta(seconds=duration))
-                logging.info("⏱️ %s completed in %s", service_name, readable)
-
-                if not success:
-                    errors = True
-
-            else:
-                logging.warning("No services found in %s", docker_config.compose_file.name)
-        except FileNotFoundError as fnf:
-            logging.error("Missing file: %s", fnf)
-            errors = True
-        except YAMLError as ye:
-            logging.error("YAML parsing error in %s: %s", docker_config.compose_file, ye)
-            errors = True
-        except ValueError as ve:
-            logging.error("Data validation error: %s", ve)
-            errors = True
-        except subprocess.SubprocessError as se:
-            logging.error("Docker subprocess error: %s", se)
-            errors = True
-
-    total_elapsed = datetime.now() - total_start
-    logging.info("🚀 Total container operation time: %s", format_time_delta(total_elapsed))
-
-    # 📊 Show end-of-run dashboard
-    if all_timings:
-        logging.info("📊 Container Timing Summary:")
-        for name, duration, success in sorted(all_timings, key=lambda x: x[1], reverse=True):
-            status = "✅" if success else "❌"
-
-            readable = format_time_delta(timedelta(seconds=duration))
-
-            logging.info(" %s %-20s %s", status, name, readable)
+    summarize_timings(all_timings, action)
+    elapsed = format_time_delta(datetime.now() - total_start)
+    logging.info("🚀 Total container operation time: %s", elapsed)
 
     if errors:
         logging.error("⚠️ Errors occurred during '%s' operations.", action)
     else:
         logging.info("✅ All containers '%s'ed successfully.", action)
+
+def parse_compose_services(docker_config: DockerComposeManager) -> List[str]:
+    """
+    Safely load and return a list of service names from a Docker Compose file.
+
+    Args:
+        docker_config (DockerComposeManager): The manager instance with compose_file reference.
+
+    Returns:
+        List[str]: List of service names, or empty list on failure.
+    """
+    try:
+        with open(docker_config.compose_file, 'r', encoding='utf-8') as file:
+            compose_data = yaml.safe_load(file)
+        return list(compose_data.get('services', {}).keys())
+    except FileNotFoundError:
+        logging.error("Compose file not found: %s", docker_config.compose_file)
+    except PermissionError:
+        logging.error("Permission denied when accessing: %s", docker_config.compose_file)
+    except YAMLError as ye:
+        logging.error("YAML parsing error in %s: %s", docker_config.compose_file, str(ye))
+    except OSError as ose:
+        logging.error("OS error reading %s: %s", docker_config.compose_file, str(ose))
+
+    return []
+
+def run_service_action(
+    docker_cfg: DockerComposeManager,
+    svc_name: str,
+    action: str
+) -> Tuple[bool, float]:
+    """
+    Run container up/down action with timing and logging.
+
+    Args:
+        docker_cfg (DockerComposeManager): Compose manager instance.
+        svc_name (str): Service name.
+        action (str): 'up' or 'down'.
+
+    Returns:
+        Tuple[bool, float]: Success flag and duration in seconds.
+    """
+    sys.stdout.write("\n")
+
+    if (
+        (action == "up" and svc_name in IGNORE_CONTAINERS_UP) or
+        (action == "down" and svc_name in IGNORE_CONTAINERS_DOWN)
+    ):
+        logging.info("⏭️ Skipping %s during '%s' as it's marked to be ignored.", svc_name, action)
+        return True, 0.0
+
+    logging.info("%s %s...", "Taking down" if action == "down" else "Bringing up", svc_name)
+
+    if action == "up":
+        return run_container_task_with_spinner(f"Starting {svc_name}", docker_cfg, svc_name, "up")
+
+    if DockerComposeManager.check_container_status(svc_name):
+        return run_container_task_with_spinner(f"Stopping {svc_name}", docker_cfg, svc_name, "down")
+
+    return True, 0.0
+
+def remove_orphan_containers(expected_services: Set[str]) -> None:
+    """
+    Find and remove running containers not declared in current Compose files.
+
+    Args:
+        expected_services (Set[str]): Declared service names.
+    """
+    try:
+        result = subprocess.run(
+            ['docker', 'ps', '--format', '{{.Names}}'],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True
+        )
+    except subprocess.CalledProcessError as e:
+        msg = e.stderr.decode('utf-8') if e.stderr else str(e)
+        logging.error("❌ Failed to retrieve running containers: %s", msg)
+        return
+    except OSError as e:
+        logging.error("❌ OS error while executing 'docker ps': %s", str(e))
+        return
+
+    running_containers = result.stdout.decode('utf-8').splitlines()
+    # 🛡️ Exclude containers explicitly ignored during 'down'
+    effective_expected = expected_services.union(IGNORE_CONTAINERS_DOWN)
+    orphaned = [c for c in running_containers if c not in effective_expected]
+
+    if not orphaned:
+        return
+
+    logging.warning("🧹 Detected orphan containers: %s", ", ".join(orphaned))
+
+    for orphan in orphaned:
+        try:
+            subprocess.run(['docker', 'rm', '-f', orphan], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, check=True)
+            logging.info("✅ Removed orphan: %s", orphan)
+        except subprocess.CalledProcessError as e:
+            err = e.stderr.decode('utf-8') if e.stderr else str(e)
+            logging.error("❌ Could not remove '%s': %s", orphan, err)
+        except OSError as e:
+            logging.error("❌ OS error while removing container '%s': %s", orphan, str(e))
+
+def summarize_timings(timings: List[Tuple[str, float, bool]], action: str) -> None:
+    """
+    Display a timing dashboard for all service actions.
+
+    Args:
+        timings (List[Tuple[str, float, bool]]): Service name, duration, success.
+    """
+    if not timings:
+        logging.info("No services were processed.")
+        return
+
+    logging.info("📊 Container Timing Summary:")
+    for name, duration, success in sorted(timings, key=lambda x: x[1], reverse=True):
+        status = "✅" if success else "❌"
+        readable = ''
+        if (name in IGNORE_CONTAINERS_DOWN and action == "down"):
+            readable = format_time_delta(timedelta(seconds=duration)) + " SKIPPED"
+        elif (name in IGNORE_CONTAINERS_UP and action == "up"):
+            readable = format_time_delta(timedelta(seconds=duration)) + " SKIPPED"
+        else:
+            readable = format_time_delta(timedelta(seconds=duration))
+        logging.info(" %s %-20s %s", status, name, readable)
 
 def container_task(docker_cfg: DockerComposeManager, svc_name: str, action: str) -> bool:
     """
@@ -348,6 +440,12 @@ def container_task(docker_cfg: DockerComposeManager, svc_name: str, action: str)
     Returns:
         bool: True if command succeeded or skipped; False if failed.
     """
+    if (
+        (action == "down" and svc_name in IGNORE_CONTAINERS_DOWN)
+    ):
+        logging.info("⏭️ container_task: Skipping '%s' during down as it's ignored.", svc_name)
+        return True
+
     if action == "up" or DockerComposeManager.check_container_status(svc_name):
         return docker_cfg.run_docker_compose(action, svc_name)
     return True
@@ -465,8 +563,9 @@ def check_required_ports_exist(port_rules: list) -> Dict[int, Dict[str, Any]]:
                 elif isinstance(raw_port, str):
                     ports = [raw_port]
 
+                # This rule doesn't match the port we care about
                 if str(port) not in ports:
-                    continue  # This rule doesn't match the port we care about
+                    continue
 
                 result["found"] = True
                 result["matched_rules"].append(rule.get("DisplayName", rule.get("Name", "Unnamed")))
@@ -971,10 +1070,10 @@ def main() -> None:
             enforce_active_profile=ENFORCE_ACTIVE_PROFILE,
             enforce_docker_backend=ENFORCE_DOCKER_BACKEND,
             enforce_ports=ENFORCE_PORTS
-        ) # Adjust these flags as needed True or False
+        )
 
-        docker_network_name = DOCKER_NETWORK_NAME  # 🔁 Replace with your actual internal Docker network
-        docker_network_ok = DockerComposeManager.ensure_docker_network(docker_network_name)
+        unique_networks = list(set(DOCKER_NETWORK_NAME))
+        docker_network_ok = DockerComposeManager.ensure_docker_network(unique_networks)
 
         if network_firewall_ok and docker_network_ok:
             docker_configs = load_config(LOAD_CONFIG_PATH)
