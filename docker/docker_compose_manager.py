@@ -47,6 +47,7 @@ from yaml import YAMLError
 from alive_progress import alive_it
 from tqdm import tqdm
 
+### BEGIN Modify to your liking
 REQUIRED_PORTS = [<port_01>, <port_02>, <port_03>]
 
 DOCKER_NETWORK_NAME = ["<docker-network-01>", "<docker-network-02>"]
@@ -59,6 +60,7 @@ IGNORE_CONTAINERS_DOWN = {"<container_name_01>", "<container_name_02>"}
 ENFORCE_ACTIVE_PROFILE = False
 ENFORCE_DOCKER_BACKEND = False
 ENFORCE_PORTS = False
+### END Modify to your liking
 
 FIREWALL_PROFILE_MAP = {
     "1": "Domain",
