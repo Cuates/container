@@ -36,7 +36,7 @@ RUN apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql18
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy freetds and odbc files for mssql connection
-# Make sure to update the odbcinit.ini file path for "ODBC Driver for SQL Server" as the driver could have updated
+# Make sure to update the odbcinst.ini file path for "ODBC Driver for SQL Server" as the driver could have updated
 COPY freetds.conf /etc/freetds/
 COPY odbc.ini /etc/
 COPY odbcinst.ini /etc/
