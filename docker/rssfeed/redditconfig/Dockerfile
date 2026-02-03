@@ -13,13 +13,31 @@ RUN apt-get update \
 && apt-get install -y freetds-bin \
 && apt-get install -y freetds-common \
 && apt-get install -y freetds-dev \
+&& apt-get install -y build-essential \
+&& apt-get install -y python3-dev \
 && apt-get install -y vim \
 && apt-get install -y iputils-ping \
 && apt-get install -y net-tools \
 && apt-get install -y libpq-dev \
 && apt-get install -y cron
 
+# Microsoft SQL Server ODBC Driver 18 setup
+RUN apt-get update && apt-get install -y curl gnupg apt-transport-https
+
+# Add Microsoft package signing key securely
+RUN curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
+
+# Add Microsoft SQL Server repo for Debian 12
+RUN echo "deb [signed-by=/etc/apt/trusted.gpg.d/microsoft.gpg] https://packages.microsoft.com/debian/12/prod bookworm main" > /etc/apt/sources.list.d/mssql-release.list
+
+# Install ODBC driver
+RUN apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql18
+
+# Optional cleanup
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Copy freetds and odbc files for mssql connection
+# Make sure to update the odbcinst.ini file path for "ODBC Driver for SQL Server" as the driver could have updated
 COPY freetds.conf /etc/freetds/
 COPY odbc.ini /etc/
 COPY odbcinst.ini /etc/
@@ -29,6 +47,8 @@ WORKDIR /usr/local/src/rssfeedredditdatabase
 
 # Pip upgrade setup tools and wheel
 RUN pip install --upgrade pip setuptools wheel
+
+RUN pip install pyodbc
 
 # Pip install pipenv
 RUN pip install pipenv
