@@ -4,23 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pyodbc = "*"
-psycopg2 = "*"
-psycopg2-binary = "*"
-flask = "*"
-flask-restful = "*"
-flask-cors = "*"
-gunicorn = "*"
-uwsgi = "*"
-pytz = "*"
-tzlocal = "*"
-sqlalchemy = "*"
-requests = "*"
-urllib3 = "*"
-html3 = "*"
-mysqlclient = "*"
-feedparser = "*"
-pymysql = "*"
+fastapi = "*"
+uvicorn = {extras = ["standard"], version = "*"}
+sqlalchemy = ">=2.0.41,<3.0"
+asyncpg = "*"
+asyncmy = "*"
+aioodbc = "*"
+json-repair = "*"
 
 [dev-packages]
 
