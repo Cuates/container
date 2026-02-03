@@ -71,7 +71,7 @@ RUN pipenv install --deploy --ignore-pipfile
 COPY . .
 
 # Expose port
-EXPOSE 4815
+EXPOSE <Port_Number>
 
 # Pipenv run uvicorn command
-CMD ["pipenv", "run", "uvicorn", "--host", "0.0.0.0", "--port", "4815", "--workers", "20", "newsfeedwebservice:app"]
+CMD ["pipenv", "run", "uvicorn", "--host", "0.0.0.0", "--port", "<Port_Number>", "--workers", "20", "newsfeedwebservice:app"]
